@@ -1,0 +1,16 @@
+# Ignore everything
+*
+
+# But not these files:
+!**/.gitignore
+!**/.editorconfig
+!**/Makefile
+!build_win.bat
+
+!src/**/*.c
+!inc/**/*.h
+
+!meta/**/*.rc
+!meta/**/*.ico
+
+!*/
