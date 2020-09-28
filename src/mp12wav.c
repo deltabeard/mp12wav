@@ -90,7 +90,7 @@ int main(int argc, char *argv[])
 		format.sampleRate = hz;
 		format.bitsPerSample = 16;
 		drwav_init_file_write(&wav, argv[2], &format, NULL);
-		drwav_write_raw(&wav, outputSize, output);
+		drwav_write_raw(&wav, outputSize * sizeof(short), output);
 		drwav_uninit(&wav);
 	}
 
