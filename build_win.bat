@@ -21,7 +21,7 @@ SET CC="cl"
 SET OBJEXT="obj"
 SET RM="del"
 SET EXEOUT="/Fe"
-SET CFLAGS="/nologo /analyze /diagnostics:caret /O2 /GF /Zo- /fp:precise /W3"
+SET CFLAGS="/nologo /analyze /diagnostics:caret /O1 /Zo- /MD /Gw /fp:fast /W3"
 SET LDFLAGS="/link /SUBSYSTEM:CONSOLE"
 
 REM Options specific to 32-bit platforms
@@ -30,7 +30,7 @@ if "%VSCMD_ARG_TGT_ARCH%"=="x32" (
 	REM set CFLAGS=%CFLAGS% /arch:SSE
 
 	REM Uncomment the following to support ReactOS and Windows XP.
-	REM set CFLAGS=%CFLAGS% /Fdvc141.pdb
+	set CFLAGS=%CFLAGS% /Fdvc141.pdb
 )
 
 set ICON_FILE=icon.ico
