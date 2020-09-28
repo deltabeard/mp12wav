@@ -195,11 +195,11 @@ static const float s_jo_filterTbl[64][32] = {
 };
 
 // up to 32-bits
-static unsigned jo_readBits(const unsigned char *data, unsigned *at, int num)
+static unsigned jo_readBits(const unsigned char *data, unsigned *at, unsigned num)
 {
 	unsigned r = 0;
 	// read partial starting bits
-	int sc = (8 - (*at & 7)) & 7;
+	unsigned sc = (8 - (*at & 7)) & 7;
 	sc = sc > num ? num : sc;
 	if(sc) {
 		r = (data[*at/8] >> (8 - (*at&7) - sc)) & ((1<<sc)-1);
@@ -227,7 +227,7 @@ bool jo_read_mp1(const void *input, unsigned inputSize,
 		short **output_, unsigned *outputSize_,
 		unsigned *hz_, unsigned *channels_)
 {
-	int outputSize = 0, hz = 0, channels = 0;
+	unsigned outputSize = 0, hz = 0, channels = 0;
 	short *output = 0;
 	unsigned outputMax = 0;
 	const unsigned char *data = (const unsigned char *)input;
@@ -262,12 +262,11 @@ bool jo_read_mp1(const void *input, unsigned inputSize,
 			return false;
 		}
 
-		static const int bitrateTbl[16] = { 0,32,40,48,56,64,80,96,112,128,160,192,224,256,320,-1 };
-		int kbps = bitrateTbl[(header >> 12) & 15];
-		if (kbps < 0) {
+		/* Check that bitrate is valid. */
+		if((header ^ 0xF000) == 0)
 			return false;
-		}
-		static const int hzTbl[4] = { 44100, 48000, 32000, 0 };
+		
+		static const unsigned hzTbl[4] = { 44100, 48000, 32000, 0 };
 		hz = hzTbl[(header >> 10) & 3];
 		if (!hz) {
 			return false;
@@ -277,10 +276,10 @@ bool jo_read_mp1(const void *input, unsigned inputSize,
 		// mode 1 = joint stereo
 		// mode 2 = dual channel (no idea what this does TODO)
 		// mode 3 = mono
-		int mode = (header >> 6) & 3;
-		int modeExt = (header >> 4) & 3;
+		unsigned mode = (header >> 6) & 3;
+		unsigned modeExt = (header >> 4) & 3;
 		channels = mode == 3 ? 1 : 2;
-		const int bound = mode == 1 ? (modeExt + 1) * 4 : 32;
+		const unsigned bound = mode == 1 ? (modeExt + 1) * 4 : 32;
 
 		bool errorProtection = (header >> 16) & 1 ^ 1;
 		if (errorProtection) {
@@ -363,10 +362,10 @@ bool jo_read_mp1(const void *input, unsigned inputSize,
 				}
 			}
 		}
-		if (at > inputSize * 8) {
-			printf("file corruption?\n");
-			return false;
-		}
+		
+		if (at > inputSize * 8)
+			return false; /* Possible file corruption? */
+
 		if (outputMax == 0) {
 			// estimate total number of samples (may be totally wrong, but its better than nothing)
 			at = (at + 7)&-8;
