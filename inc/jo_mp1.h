@@ -25,7 +25,7 @@
 #include <math.h>
 #include <limits.h>
 
-static const double s_jo_multTbl[64] = {
+static const float s_jo_multTbl[64] = {
 	2.000000,1.587401,1.259921,1.000000,0.793701,0.629961,0.500000,0.396850,0.314980,0.250000,0.198425,0.157490,0.125000,0.099213,0.078745,0.062500,
 	0.049606,0.039373,0.031250,0.024803,0.019686,0.015625,0.012402,0.009843,0.007812,0.006201,0.004922,0.003906,0.003100,0.002461,0.001953,0.001550,
 	0.001230,0.000977,0.000775,0.000615,0.000488,0.000388,0.000308,0.000244,0.000194,0.000154,0.000122,0.000097,0.000077,0.000061,0.000048,0.000038,
@@ -35,7 +35,7 @@ static const double s_jo_multTbl[64] = {
 // l = i - 256;
 // s = (i & 0x40) ? 1 : -1;
 // windowTbl[(i/16)|((i%16)<<5)] = s * 20 * exp(-(l/112)*-(l/112)) * sin(l * M_PI*2 / 112) / l; 
-static const double s_jo_windowTbl[512] = {
+static const float s_jo_windowTbl[512] = {
 	-0.000000,-0.000443,0.003250,-0.007004,0.031082,-0.078629,0.100311,-0.572037,1.144989,0.572037,0.100311,0.078629,0.031082,0.007004,0.003250,0.000443,
 	-0.000015,-0.000473,0.003326,-0.007919,0.030518,-0.084183,0.090927,-0.600220,1.144287,0.543823,0.108856,0.073059,0.031479,0.006119,0.003174,0.000397,
 	-0.000015,-0.000534,0.003387,-0.008865,0.029785,-0.089706,0.080688,-0.628296,1.142212,0.515610,0.116577,0.067520,0.031738,0.005295,0.003082,0.000366,
@@ -71,7 +71,7 @@ static const double s_jo_windowTbl[512] = {
 };
 
 // filterTbl[i][j] = cos(((M_PI/64*i+M_PI/4)*(2*j+1)));
-static const double s_jo_filterTbl[64][32] = {
+static const float s_jo_filterTbl[64][32] = {
 	{0.707107,-0.707107,-0.707107,0.707107,0.707107,-0.707107,-0.707107,0.707107,0.707107,-0.707107,-0.707107,0.707107,0.707107,-0.707107,-0.707107,0.707107,
 		0.707107,-0.707107,-0.707107,0.707107,0.707107,-0.707107,-0.707107,0.707107,0.707107,-0.707107,-0.707107,0.707107,0.707107,-0.707107,-0.707107,0.707107},
 	{0.671559,-0.803208,-0.514103,0.903989,0.336890,-0.970031,-0.146730,0.998795,-0.049068,-0.989177,0.242980,0.941544,-0.427555,-0.857729,0.595699,0.740951,
@@ -237,7 +237,7 @@ bool jo_read_mp1(const void *input, long inputSize, short **output_, long *outpu
 	const unsigned char *data = (const unsigned char *)input;
 
 	// Buffers for the lapped transform
-	double buf[2][2 * 512] = { 0 };
+	float buf[2][2 * 512] = { 0 };
 	int bufOffset[2] = { 64,64 };
 	int at = 0; // Where in the stream are we?
 
@@ -328,14 +328,14 @@ bool jo_read_mp1(const void *input, long inputSize, short **output_, long *outpu
 				}
 			}
 			// Compute bands: Dequantize & Denormalize
-			double bandTbl[2][32] = { 0 };
+			float bandTbl[2][32] = { 0 };
 			for (int i = 0; i < 32; ++i) {
 				for (int ch = 0; ch < channels; ++ch) {
 					int b = bitAlloc[i][ch];
 					if (b++) {
 						int samp = samples[i][ch];
-						double f = ((samp >> b - 1) & 1) ? 0 : -1;
-						f += (samp & ((1 << b - 1) - 1)) / (double)(1 << b - 1);
+						float f = ((samp >> b - 1) & 1) ? 0 : -1;
+						f += (samp & ((1 << b - 1) - 1)) / (float)(1 << b - 1);
 						f = (f + 1.0 / (1 << b - 1)) * (1 << b) / ((1 << b) - 1.0);
 						f *= s_jo_multTbl[scaleIdx[i][ch]];
 						bandTbl[ch][i] = f;
@@ -345,18 +345,18 @@ bool jo_read_mp1(const void *input, long inputSize, short **output_, long *outpu
 			// Convert subbands to PCM
 			for (int ch = 0; ch < channels; ++ch) {
 				bufOffset[ch] = (bufOffset[ch] + 0x3C0) & 0x3ff;
-				double *bufOffsetPtr = buf[ch] + bufOffset[ch];
-				const double *f = s_jo_filterTbl[0];
+				float *bufOffsetPtr = buf[ch] + bufOffset[ch];
+				const float *f = s_jo_filterTbl[0];
 				for (int i = 0; i < 64; ++i) {
-					double sum = 0;
+					float sum = 0;
 					for (int j = 0; j < 32; ++j) {
 						sum += *f++ * bandTbl[ch][j];
 					}
 					bufOffsetPtr[i] = sum;
 				}
-				const double *w = s_jo_windowTbl;
+				const float *w = s_jo_windowTbl;
 				for (int i = 0; i < 32; ++i) {
-					double sum = 0;
+					float sum = 0;
 					for (int j = 0; j < 16; ++j) {
 						int k = i | (j + (j + 1 & -2)) << 5;
 						sum += *w++ * buf[ch][(k + bufOffset[ch]) & 0x3ff];
