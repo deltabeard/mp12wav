@@ -22,7 +22,7 @@
 #define DR_WAV_IMPLEMENTATION
 #include <dr_wav.h>
 
-void *load_file(FILE *f, long *sz)
+void *load_file(FILE *f, unsigned *sz)
 {
 	void *out;
 
@@ -42,11 +42,10 @@ err:
 
 int main(int argc, char *argv[])
 {
-	int hz, channels;
-	long outputSize;
+	unsigned hz, channels, outputSize;
 	short *output;
 	void *input;
-	long inputSize;
+	unsigned inputSize;
 	FILE *f;
 	bool err;
 

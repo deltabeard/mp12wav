@@ -17,14 +17,6 @@
 
 #include <stdbool.h>
 
-#if defined(_MSC_VER) && _MSC_VER >= 0x1400
-#define _CRT_SECURE_NO_WARNINGS // suppress warnings about fopen()
-#endif
-
-#include <stdlib.h>
-#include <math.h>
-#include <limits.h>
-
 static const float s_jo_multTbl[64] = {
 	2.000000,1.587401,1.259921,1.000000,0.793701,0.629961,0.500000,0.396850,0.314980,0.250000,0.198425,0.157490,0.125000,0.099213,0.078745,0.062500,
 	0.049606,0.039373,0.031250,0.024803,0.019686,0.015625,0.012402,0.009843,0.007812,0.006201,0.004922,0.003906,0.003100,0.002461,0.001953,0.001550,
@@ -203,7 +195,8 @@ static const float s_jo_filterTbl[64][32] = {
 };
 
 // up to 32-bits
-static unsigned jo_readBits(const unsigned char *data, int *at, int num) {
+static unsigned jo_readBits(const unsigned char *data, unsigned *at, int num)
+{
 	unsigned r = 0;
 	// read partial starting bits
 	int sc = (8 - (*at & 7)) & 7;
@@ -230,16 +223,19 @@ static unsigned jo_readBits(const unsigned char *data, int *at, int num) {
 }
 
 
-bool jo_read_mp1(const void *input, long inputSize, short **output_, long *outputSize_, int *hz_, int *channels_) {
+bool jo_read_mp1(const void *input, unsigned inputSize,
+		short **output_, unsigned *outputSize_,
+		unsigned *hz_, unsigned *channels_)
+{
 	int outputSize = 0, hz = 0, channels = 0;
 	short *output = 0;
-	int outputMax = 0;
+	unsigned outputMax = 0;
 	const unsigned char *data = (const unsigned char *)input;
 
 	// Buffers for the lapped transform
 	float buf[2][2 * 512] = { 0 };
 	int bufOffset[2] = { 64,64 };
-	int at = 0; // Where in the stream are we?
+	unsigned at = 0; // Where in the stream are we?
 
 	while (at < inputSize * 8) {
 		// Sync markers are byte aligned
