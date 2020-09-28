@@ -75,7 +75,7 @@ int main(int argc, char *argv[])
 
 	if(err == false)
 	{
-		fprintf(stderr, "MP1 error %d\n", err);
+		fprintf(stderr, "MP1 error\n");
 		return EXIT_FAILURE;
 	}
 
